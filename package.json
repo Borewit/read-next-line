@@ -1,0 +1,57 @@
+{
+	"name": "read-next-line",
+	"version": "0.1.0",
+	"description": "Reads text lines from stream",
+	"type": "module",
+	"types": "./lib/read-next-line.d.ts",
+	"engines": {
+		"node": ">=16"
+	},
+	"exports": {
+		".": "./lib/read-next-line.js"
+	},
+	"scripts": {
+		"compile": "tsc -p lib",
+		"build": "yarn run compile",
+		"test": "mocha"
+	},
+	"author": {
+		"name": "Borewit",
+		"url": "https://github.com/Borewit"
+	},
+	"repository": "https://github.com/Borewit/read-next-line.git",
+	"funding": [
+		{
+			"type": "github",
+			"url": "https://github.com/sponsors/Borewit"
+		},
+		{
+			"type": "buymeacoffee",
+			"url": "https://buymeacoffee.com/borewit"
+		}
+	],
+	"files": [
+		"lib/**/*.js",
+		"lib/**/*.d.ts",
+		"lib/*.cjs"
+	],
+	"packageManager": "yarn@4.6.0",
+	"license": "MIT",
+	"keywords": [
+		"stream",
+		"reader",
+		"line",
+		"line reader",
+		"line-reader",
+		"readable",
+		"ReadableStream",
+		"promise",
+		"iterator"
+	],
+	"devDependencies": {
+		"@types/node": "^22.10.6",
+		"chai": "^5.1.2",
+		"mocha": "^11.0.1",
+		"typescript": "^5.7.3"
+	}
+}

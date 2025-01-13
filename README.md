@@ -1,0 +1,88 @@
+# `read-next-line`: Read Lines from Streams in JavaScript
+
+`StreamLineReader` is a lightweight, efficient utility for reading lines from a `ReadableStream` in JavaScript. The
+primary goal of this module is to enable memory-efficient line-by-line processing of large data streams, such as logs,
+files, or real-time data feeds.
+
+## Features
+
+- **Line-based processing**: Reads lines directly from any `ReadableStream`.
+- **Memory efficiency**: Keeps memory usage low by processing one line at a time.
+- **Browser compatibility**: Works seamlessly with modern web browsers.
+- **Node.js compatibility**: Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api).
+
+## Installation
+
+Install the package via npm:
+
+```bash
+npm install read-next-line
+```
+
+## Usage
+
+Import and use `StreamLineReader` in your project:
+
+```js
+import {ReadNextLine} from 'read-next-line';
+
+async function processStream(stream) {
+	const reader = new ReadNextLine(stream);
+
+	let line;
+	while ((line = await reader.readLine()) !== null) {
+		console.log(line); // Process each line as needed
+	}
+}
+```
+
+### Parsing a Blob/File
+
+To process a file input, wrap the file's stream with `ReadNextLine`:
+
+```js
+const file = document.querySelector('input[type="file"]').files[0];
+const reader = new ReadNextLine(file.stream());
+
+let line;
+while ((line = await reader.readLine()) !== null) {
+	console.log(line);
+}
+```
+
+## API
+
+### `StreamLineReader` Class
+
+#### Constructor
+
+```ts
+new StreamLineReader(stream: ReadableStream<Uint8Array>);
+```
+
+- **stream**: The `ReadableStream` to process.
+
+#### Methods
+
+- **`readLine(): Promise<string | null>`**
+	- Reads the next line from the stream. Returns `null` if the stream ends.
+
+## How It Works
+
+`StreamLineReader`:
+
+1. Reads lines directly from a `ReadableStream` using a `TextDecoderStream` to decode binary data into text.
+2. Splits the decoded text by Unix (`\n`) or Windows (`\r\n`) line endings.
+3. Buffers incomplete lines for the next read operation.
+
+This approach ensures efficient line-by-line processing without loading the entire stream into memory.
+
+## Browser Compatibility
+
+- **Streams API**: Supported in modern browsers.
+- **TextDecoderStream**: Required for decoding binary data into text streams.
+- **File/Blob APIs**: For file handling (in example use cases).
+
+## License
+
+This project is licensed under the MIT License. Feel free to use, modify, and distribute as needed.
