@@ -1,12 +1,38 @@
+// Define common BOM signatures
+const BOM_UTF_8 = new Uint8Array([0xEF, 0xBB, 0xBF]);
+const BOM_UTF_16_LE = new Uint8Array([0xFF, 0xFE]);
+const BOM_UTF_16_BE = new Uint8Array([0xFE, 0xFF]);
+
+type TextEncodingType = 'utf-8' | 'utf-16le' | 'utf-16be';
+
+function extractEncoding(uint8Array: Uint8Array): TextEncodingType | undefined {
+	if (uint8Array.byteLength >= 2) {
+		if (uint8Array[0] === BOM_UTF_16_LE[0] &&
+			uint8Array[1] === BOM_UTF_16_LE[1]) {
+			return 'utf-16le';
+		} else if (uint8Array[0] === BOM_UTF_16_BE[0] &&
+			uint8Array[1] === BOM_UTF_16_BE[1]) {
+			return 'utf-16be';
+		}
+	}
+	if (uint8Array.byteLength >= 3 && uint8Array[0] === BOM_UTF_8[0] &&
+		uint8Array[1] === BOM_UTF_8[1] &&
+		uint8Array[2] === BOM_UTF_8[2]) {
+		return 'utf-8';
+	}
+}
+
 export class ReadNextLine {
 	private buffer: string = '';
 	private lineBuffer: string[] = [];
-	private reader: ReadableStreamDefaultReader<string>;
-	private readonly separator: RegExp = /\r\n|\n/;
+	private reader: ReadableStreamDefaultReader<Uint8Array>;
+	private readonly separator: RegExp = /\r\n|\n\r|\n/;
+	private decoder?: TextDecoder;
+	private textEncoding?: string;
 
 	constructor(private stream: ReadableStream<Uint8Array>) {
 		// Initialize the reader properly by decoding the stream and assigning the reader.
-		this.reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+		this.reader = stream.getReader();
 	}
 
 	/**
@@ -29,8 +55,13 @@ export class ReadNextLine {
 				return null;
 			}
 
+			if (!this.decoder) {
+				this.textEncoding = extractEncoding(value as Uint8Array);
+				this.decoder = new TextDecoder(this.textEncoding);
+			}
+
 			// Append the new chunk to the buffer.
-			this.buffer += value;
+			this.buffer += this.decoder.decode(value);
 
 			// Split the buffer into lines based on the separator.
 			this.lineBuffer = this.buffer.split(this.separator);

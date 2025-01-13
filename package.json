@@ -11,8 +11,9 @@
 		".": "./lib/read-next-line.js"
 	},
 	"scripts": {
+		"clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts'",
 		"compile": "tsc -p lib",
-		"build": "yarn run compile",
+		"build": "yarn run clean && yarn run compile",
 		"test": "mocha"
 	},
 	"author": {
@@ -46,11 +47,18 @@
 		"readable",
 		"ReadableStream",
 		"promise",
-		"iterator"
+		"iterator",
+		"stream-api",
+		"UTF-16",
+		"UTF-8",
+		"BOM"
 	],
 	"devDependencies": {
+		"@types/chai-string": "^1.4.5",
 		"@types/node": "^22.10.6",
 		"chai": "^5.1.2",
+		"chai-string": "^1.5.0",
+		"del-cli": "^6.0.0",
 		"mocha": "^11.0.1",
 		"typescript": "^5.7.3"
 	}

@@ -10,6 +10,15 @@ files, or real-time data feeds.
 - **Memory efficiency**: Keeps memory usage low by processing one line at a time.
 - **Browser compatibility**: Works seamlessly with modern web browsers.
 - **Node.js compatibility**: Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api).
+- Supports the following **text encoding**:
+  - UTF-8 (default)
+  - UTF-8 with the BOM field set
+  - UTF-16LE with the BOM field is set
+  - UTF-16BE with the BOM field is set
+- Supports different [line endings](https://en.wikipedia.org/wiki/Newline):
+  - Windows (`CR LF`)
+  - Unix (`LF`)
+  - Acorn BBC / RISC OS (`LF CR`).
 
 ## Installation
 
@@ -18,6 +27,10 @@ Install the package via npm:
 ```bash
 npm install read-next-line
 ```
+
+## Compatibility
+**read-next-line** is a pure ECMAScript Module (ESM). Designed to work with Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api) or [Streams_API](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API) in the browser.
+Compatible with modern web browsers or Node.js ≥ 18.
 
 ## Usage
 
@@ -75,13 +88,6 @@ new StreamLineReader(stream: ReadableStream<Uint8Array>);
 2. Splits the decoded text by Unix (`\n`) or Windows (`\r\n`) line endings.
 3. Buffers incomplete lines for the next read operation.
 
-This approach ensures efficient line-by-line processing without loading the entire stream into memory.
-
-## Browser Compatibility
-
-- **Streams API**: Supported in modern browsers.
-- **TextDecoderStream**: Required for decoding binary data into text streams.
-- **File/Blob APIs**: For file handling (in example use cases).
 
 ## License
 
