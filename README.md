@@ -1,8 +1,11 @@
-# `read-next-line`: Read Lines from Streams in JavaScript
+[![Node.js CI](https://github.com/Borewit/read-next-line/actions/workflows/nodejs-ci.yml/badge.svg)](https://github.com/Borewit/read-next-line/actions/workflows/nodejs-ci.yml)
+[![NPM version](https://img.shields.io/npm/v/read-next-line.svg)](https://npmjs.org/package/read-next-line)
+[![npm downloads](http://img.shields.io/npm/dm/read-next-line.svg)](https://npmcharts.com/compare/read-next-line)
 
-`StreamLineReader` is a lightweight, efficient utility for reading lines from a `ReadableStream` in JavaScript. The
-primary goal of this module is to enable memory-efficient line-by-line processing of large data streams, such as logs,
-files, or real-time data feeds.
+# `read-next-line`
+Is s a lightweight, efficient utility for reading lines from a `ReadableStream` in JavaScript.
+The primary goal of this module is to enable memory-efficient line-by-line processing of large data streams,
+such as logs, files, or real-time data feeds.
 
 ## Features
 
