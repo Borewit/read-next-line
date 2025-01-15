@@ -32,16 +32,25 @@ npm install read-next-line
 ```
 
 ## Compatibility
-**read-next-line** is a pure ECMAScript Module (ESM). Designed to work with Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api) or [Streams_API](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API) in the browser.
+**read-next-line** is a hybrid ECMAScript Module (ESM) with CommonJS backwards compatibility support. Designed to work with Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api) or [Streams_API](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API) in the browser.
 Compatible with modern web browsers or Node.js ≥ 18.
 
 ## Usage
 
 Import and use `StreamLineReader` in your project:
 
+In ESM projects or any TypeScript project use:
 ```js
 import {ReadNextLine} from 'read-next-line';
+```
 
+In CommonJS projects use:
+```js
+const { ReadNextLine } = require('read-next-line');
+```
+
+Using **read-next-line** to read lines of text of a binary [ReadableStream]()https://developer.mozilla.org/docs/Web/API/ReadableStream:
+```js
 async function processStream(stream) {
 	const reader = new ReadNextLine(stream);
 
