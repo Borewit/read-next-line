@@ -46,7 +46,7 @@ import {ReadNextLine} from 'read-next-line';
 
 In CommonJS projects use:
 ```js
-const { ReadNextLine } = require('read-next-line');
+const {ReadNextLine} = require('read-next-line');
 ```
 
 Using **read-next-line** to read lines of text of a binary [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream):
