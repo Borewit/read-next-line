@@ -3,13 +3,13 @@
 [![npm downloads](http://img.shields.io/npm/dm/read-next-line.svg)](https://npmcharts.com/compare/read-next-line)
 
 # `read-next-line`
-Is s a lightweight, efficient utility for reading lines from a `ReadableStream` in JavaScript.
+Is s a lightweight, efficient utility for reading lines from a [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream) in JavaScript.
 The primary goal of this module is to enable memory-efficient line-by-line processing of large data streams,
 such as logs, files, or real-time data feeds.
 
 ## Features
 
-- **Line-based processing**: Reads lines directly from any `ReadableStream`.
+- **Line-based processing**: Reads lines directly from any [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream).
 - **Memory efficiency**: Keeps memory usage low by processing one line at a time.
 - **Browser compatibility**: Works seamlessly with modern web browsers.
 - **Node.js compatibility**: Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api).
@@ -49,7 +49,7 @@ In CommonJS projects use:
 const { ReadNextLine } = require('read-next-line');
 ```
 
-Using **read-next-line** to read lines of text of a binary [ReadableStream]()https://developer.mozilla.org/docs/Web/API/ReadableStream:
+Using **read-next-line** to read lines of text of a binary [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream):
 ```js
 async function processStream(stream) {
 	const reader = new ReadNextLine(stream);
