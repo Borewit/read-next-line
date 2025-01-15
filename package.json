@@ -2,19 +2,24 @@
 	"name": "read-next-line",
 	"version": "0.2.0",
 	"description": "Reads text lines from stream",
-	"type": "module",
 	"types": "./lib/read-next-line.d.ts",
 	"engines": {
 		"node": ">=16"
 	},
+	"type": "module",
+	"main": "./lib/main.cjs",
 	"exports": {
-		".": "./lib/read-next-line.js"
+		".": {
+			"require": "./lib/main.cjs",
+			"import": "./lib/read-next-line.js"
+		}
 	},
 	"scripts": {
 		"clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts'",
 		"compile": "tsc -p lib",
 		"build": "yarn run clean && yarn run compile",
-		"test": "mocha"
+		"test": "mocha",
+		"prepublishOnly": "yarn build"
 	},
 	"author": {
 		"name": "Borewit",
@@ -34,7 +39,7 @@
 	"files": [
 		"lib/**/*.js",
 		"lib/**/*.d.ts",
-		"lib/*.cjs"
+		"lib/main.cjs"
 	],
 	"packageManager": "yarn@4.6.0",
 	"license": "MIT",

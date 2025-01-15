@@ -1,10 +1,9 @@
 import * as chai from 'chai';
 import chaiString from 'chai-string';
-import {ReadableStream} from 'node:stream/web';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import {ReadNextLine} from '../lib/read-next-line.js';
-import {createReadableStreamFromFile} from "./util.js";
+import {createReadableStreamFromFile, createStreamFromString} from "./util.js";
 
 chai.use(chaiString);
 
@@ -16,16 +15,6 @@ const __dirname = path.dirname(__filename);
 
 describe('ReadNextLine', () => {
     // Helper function to create a ReadableStream from a string
-    function createStreamFromString(input) {
-        const encoder = new TextEncoder();
-        const encoded = encoder.encode(input);
-        return new ReadableStream({
-            start(controller) {
-                controller.enqueue(encoded);
-                controller.close();
-            },
-        });
-    }
 
 	describe('Handle line endings', ()=> {
 		it('should handle Unix line ending: LF', async () => {
