@@ -96,6 +96,14 @@ describe('ReadNextLine', () => {
 		it('should decode UTF-8 with BOM', async () => {
 			await countLinesFromWebStream('lorem-ipsem.utf-8-bom.txt', 999, startsWith)
 		});
+
+		it('should decode UTF-16 BE BOM', async () => {
+			await countLinesFromWebStream('lorem-ipsem.utf-16-be-bom.txt', 999, startsWith)
+		});
+
+		it('should decode UTF-16 LE BOM', async () => {
+			await countLinesFromWebStream('lorem-ipsem.utf-16-le-bom.txt', 999, startsWith)
+		});
 	});
 
 	describe('Text encoding from Node.js Readable', () => {
@@ -111,6 +119,14 @@ describe('ReadNextLine', () => {
 
 		it('should decode UTF-8 with BOM', async () => {
 			await countLinesFromNodeStream('lorem-ipsem.utf-8-bom.txt', 999, startsWith)
+		});
+
+		it('should decode UTF-16 BE BOM', async () => {
+			await countLinesFromNodeStream('lorem-ipsem.utf-16-be-bom.txt', 999, startsWith)
+		});
+
+		it('should decode UTF-16 LE BOM', async () => {
+			await countLinesFromNodeStream('lorem-ipsem.utf-16-le-bom.txt', 999, startsWith)
 		});
 	});
 
