@@ -12,9 +12,13 @@ export function createStreamFromString(input) {
 	});
 }
 
-export async function createReadableStreamFromFile(filePath) {
+export async function createNodeReadableStreamFromFile(filePath) {
 	const fileHandle = await fs.open(filePath, 'r');
-	const fileStream = fileHandle.createReadStream();
+	return fileHandle.createReadStream();
+}
+
+export async function createWebReadableStreamFromFile(filePath) {
+	const fileStream = await createNodeReadableStreamFromFile(filePath);
 
 	// Wrap the Node.js stream in a Web Streams API ReadableStream
 	return new ReadableStream ({

@@ -32,7 +32,16 @@ npm install read-next-line
 ```
 
 ## Compatibility
-**read-next-line** is a hybrid ECMAScript Module (ESM) with CommonJS backwards compatibility support. Designed to work with Works seamlessly with [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api) or [Streams_API](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API) in the browser.
+
+**read-next-line** is a hybrid JavaScript module, supporting:
+- ECMAScript Module (ESM)
+- CommonJS backwards compatibility support
+
+Designed to work with Works seamlessly with either:
+- [Node.js Readable streams](https://nodejs.org/api/stream.html#readable-streams)
+- [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api)
+- [Streams-API](https://developer.mozilla.org/docs/Web/API/Streams_API) in the browser
+
 Compatible with modern web browsers or Node.js ≥ 18.
 
 ## Usage
@@ -49,7 +58,7 @@ In CommonJS projects use:
 const {ReadNextLine} = require('read-next-line');
 ```
 
-Using **read-next-line** to read lines of text of a binary [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream):
+Using **read-next-line** to read lines of text of a binary [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream) or [Node.js Readable streams](https://nodejs.org/api/stream.html#readable-streams):
 ```js
 async function processStream(stream) {
 	const reader = new ReadNextLine(stream);
@@ -91,14 +100,8 @@ new StreamLineReader(stream: ReadableStream<Uint8Array>);
 
 - **`readLine(): Promise<string | null>`**
 	- Reads the next line from the stream. Returns `null` if the stream ends.
-
-## How It Works
-
-`StreamLineReader`:
-
-1. Reads lines directly from a `ReadableStream` using a `TextDecoderStream` to decode binary data into text.
-2. Splits the decoded text by Unix (`\n`) or Windows (`\r\n`) line endings.
-3. Buffers incomplete lines for the next read operation.
+- **`release(): void`**
+    - Release the internal [Reader](https://developer.mozilla.org/docs/Web/API/ReadableStreamDefaultReader/releaseLock).
 
 
 ## License

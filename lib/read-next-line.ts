@@ -1,3 +1,5 @@
+import type {Readable} from 'node:stream';
+
 // Define common BOM signatures
 const BOM_UTF_8 = new Uint8Array([0xEF, 0xBB, 0xBF]);
 const BOM_UTF_16_LE = new Uint8Array([0xFF, 0xFE]);
@@ -22,6 +24,39 @@ function extractEncoding(uint8Array: Uint8Array): TextEncodingType | undefined {
 	}
 }
 
+/**
+ * Convert a Node.js Readable stream to a Web ReadableStream.
+ *
+ * @param {Readable} nodeStream - The Node.js Readable stream to convert.
+ * @returns {ReadableStream} - The converted Web ReadableStream.
+ */
+function nodeReadableToWebReadable(nodeStream: Readable): ReadableStream<Uint8Array> {
+	return new ReadableStream({
+		start(controller: ReadableStreamDefaultController): void {
+			// When the Node.js stream emits 'data', push the chunk to the Web ReadableStream controller
+			nodeStream.on('data', (chunk) => {
+				controller.enqueue(chunk);
+			});
+
+			// When the Node.js stream ends, close the Web ReadableStream
+			nodeStream.on('end', () => {
+				controller.close();
+			});
+
+			// If an error occurs on the Node.js stream, signal the Web ReadableStream to fail
+			nodeStream.on('error', (err) => {
+				controller.error(err);
+			});
+		},
+
+		// Optionally implement cancel logic if the Web ReadableStream is cancelled
+		cancel(): void {
+			// You can handle stream cancellation here if needed
+			nodeStream.destroy();
+		}
+	});
+}
+
 export class ReadNextLine {
 	private buffer: string = '';
 	private lineBuffer: string[] = [];
@@ -30,9 +65,18 @@ export class ReadNextLine {
 	private decoder?: TextDecoder;
 	private textEncoding?: string;
 
-	constructor(private stream: ReadableStream<Uint8Array>) {
+	constructor(private stream: ReadableStream<Uint8Array> | Readable) {
 		// Initialize the reader properly by decoding the stream and assigning the reader.
-		this.reader = stream.getReader();
+		let webStream: ReadableStream<Uint8Array>;
+		if (stream instanceof ReadableStream) {
+			webStream = stream;
+		} else if(typeof stream.pipe === 'function' && typeof stream.on === 'function') {
+			// Convert Node.js stream in web stream
+			webStream = nodeReadableToWebReadable(stream);
+		} else {
+			throw new Error('Unsupported stream');
+		}
+		this.reader = webStream.getReader();
 	}
 
 	/**
@@ -72,5 +116,12 @@ export class ReadNextLine {
 
 		// Return the next line from the line buffer.
 		return this.lineBuffer.shift()!;
+	}
+
+	/**
+	 * Release the lock on the internal reader
+	 */
+	public release() {
+		this.reader.releaseLock();
 	}
 }
