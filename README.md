@@ -75,13 +75,21 @@ async function processStream(stream) {
 To process a file input, wrap the file's stream with `ReadNextLine`:
 
 ```js
-const file = document.querySelector('input[type="file"]').files[0];
-const reader = new ReadNextLine(file.stream());
-
-let line;
-while ((line = await reader.readLine()) !== null) {
-	console.log(line);
+async function proccessTextFile(blob) {
+	const reader = new ReadNextLine(blob.stream());
+	try {
+		let line;
+		do {
+			line = await reader.readLine();
+			console.log(line);
+		}
+		while (line !== null);
+	} finally {
+		reader.release();
+	}
 }
+const file = document.querySelector('input[type="file"]').files[0];
+proccessTextFile(file);
 ```
 
 ## API
