@@ -1,6 +1,6 @@
 {
 	"name": "read-next-line",
-	"version": "0.3.2",
+	"version": "0.4.0",
 	"description": "Reads text lines from stream",
 	"types": "./lib/read-next-line.d.ts",
 	"engines": {
