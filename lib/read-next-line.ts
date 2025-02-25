@@ -61,7 +61,7 @@ export class ReadNextLine {
 	private buffer: string = '';
 	private lineBuffer: string[] = [];
 	private reader: ReadableStreamDefaultReader<Uint8Array>;
-	private readonly separator: RegExp = /\r\n|\n\r|\n/;
+	private readonly separator: RegExp = /\r\n|\n\r|\n|\r/;
 	private decoder?: TextDecoder;
 	private textEncoding?: string;
 
