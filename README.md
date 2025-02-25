@@ -19,9 +19,13 @@ such as logs, files, or real-time data feeds.
   - UTF-16LE with the BOM field is set
   - UTF-16BE with the BOM field is set
 - Supports different [line endings](https://en.wikipedia.org/wiki/Newline):
-  - Windows (`CR LF`)
-  - Unix (`LF`)
-  - Acorn BBC / RISC OS (`LF CR`).
+
+  | Type                | Abbreviation | Escape sequence |
+  |---------------------|--------------|-----------------|
+  | Windows             | `CR LF`      | `\r\n`          |
+  | Unix                | `LF`         | `\n`            |
+  | Acorn BBC / RISC OS | `LF CR`      | `\n\r`          |
+  | classic Mac OS      | `CR`         | `\r`            |
 
 ## Installation
 
