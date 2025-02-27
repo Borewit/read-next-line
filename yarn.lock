@@ -266,12 +266,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chai-string@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "chai-string@npm:1.5.0"
+"chai-string@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "chai-string@npm:2.0.0"
   peerDependencies:
-    chai: ^4.1.2
-  checksum: 10c0/774e3622b23863961a71664fa47376ebd8e7d45a21bffed8b00d5283dfd2af5b53b78b92786b9190aeee1aa8732635302158fafd4563201e2dd7b2c8ad25ae03
+    chai: ">= 4"
+  checksum: 10c0/ee903dce1daf2829d54fccd8502aed2c5492c444b12f14d5c2651ff4b0b66f0e9d7746360ec68532ecf4475279b5a037df37b54f404135e166a290210a4eca7b
   languageName: node
   linkType: hard
 
@@ -1203,7 +1203,7 @@ __metadata:
     "@types/chai-string": "npm:^1.4.5"
     "@types/node": "npm:^22.10.6"
     chai: "npm:^5.1.2"
-    chai-string: "npm:^1.5.0"
+    chai-string: "npm:^2.0.0"
     del-cli: "npm:^6.0.0"
     mocha: "npm:^11.0.1"
     typescript: "npm:^5.7.3"
