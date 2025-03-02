@@ -1,4 +1,7 @@
 import type {Readable} from 'node:stream';
+import {LineSplitter} from "./LineSplitter.js";
+
+export {LineSplitter} from "./LineSplitter.js";
 
 // Define common BOM signatures
 const BOM_UTF_8 = new Uint8Array([0xEF, 0xBB, 0xBF]);
@@ -58,14 +61,10 @@ function nodeReadableToWebReadable(nodeStream: Readable): ReadableStream<Uint8Ar
 }
 
 export class ReadNextLine {
-	private buffer: string = '';
-	private lineBuffer: string[] = [];
-	private reader: ReadableStreamDefaultReader<Uint8Array>;
-	private readonly separator: RegExp = /\r\n|\n\r|\n|\r/;
-	private decoder?: TextDecoder;
-	private textEncoding?: string;
+	private reader: ReadableStreamDefaultReader<string>;
+	private done = false;
 
-	constructor(private stream: ReadableStream<Uint8Array> | Readable) {
+	constructor(stream: ReadableStream<Uint8Array> | Readable) {
 		// Initialize the reader properly by decoding the stream and assigning the reader.
 		let webStream: ReadableStream<Uint8Array>;
 		if (stream instanceof ReadableStream) {
@@ -76,7 +75,8 @@ export class ReadNextLine {
 		} else {
 			throw new Error('Unsupported stream');
 		}
-		this.reader = webStream.getReader();
+		const lineSplitter = new LineSplitter();
+		this.reader = webStream.pipeThrough(lineSplitter).getReader();
 	}
 
 	/**
@@ -84,38 +84,10 @@ export class ReadNextLine {
 	 * If there are no more lines and the stream is done, returns null.
 	 */
 	public async readLine(): Promise<string | null> {
-		while (this.lineBuffer.length === 0) {
-			// Read the next chunk from the stream.
-			const {done, value} = await this.reader.read();
-
-			// If the stream is complete and no more data is available, return null.
-			if (done) {
-				// Handle any remaining buffer content before returning null.
-				if (this.buffer) {
-					const remainingLine = this.buffer;
-					this.buffer = ''; // Clear the buffer.
-					return remainingLine;
-				}
-				return null;
-			}
-
-			if (!this.decoder) {
-				this.textEncoding = extractEncoding(value as Uint8Array);
-				this.decoder = new TextDecoder(this.textEncoding);
-			}
-
-			// Append the new chunk to the buffer.
-			this.buffer += this.decoder.decode(value);
-
-			// Split the buffer into lines based on the separator.
-			this.lineBuffer = this.buffer.split(this.separator);
-
-			// Keep the last incomplete line in the buffer for the next read.
-			this.buffer = this.lineBuffer.pop() ?? '';
-		}
-
-		// Return the next line from the line buffer.
-		return this.lineBuffer.shift()!;
+		if (this.done) return null;
+		const result = await this.reader.read();
+		this.done = result.done;
+		return result.value ?? null;
 	}
 
 	/**

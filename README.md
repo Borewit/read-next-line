@@ -74,6 +74,16 @@ async function processStream(stream) {
 }
 ```
 
+You may as well use the `LineSplitter` which is a [`TransformStream<Uint8Array, string>`](https://developer.mozilla.org/docs/Web/API/TransformStream),
+converting a binary stream into stream of lines (strings).
+
+```js
+import {LineSplitter} from 'read-next-line';
+
+const lineStream = webStream.pipeThrough(lineSplitter);
+const lineReader = lineStream.getReader();
+```
+
 ### Parsing a Blob/File
 
 To process a file input, wrap the file's stream with `ReadNextLine`:

@@ -18,13 +18,14 @@ describe('ReadNextLine', () => {
 
 	describe('Handle line endings', () => {
 		it('should handle Unix line ending: LF', async () => {
-			const input = 'line1\nline2\nline3\n';
+			const input = 'line1\nline2\nline3\n\n';
 			const stream = createStreamFromString(input);
 			const reader = new ReadNextLine(stream);
 			try {
 				expect(await reader.readLine()).to.equal('line1');
 				expect(await reader.readLine()).to.equal('line2');
 				expect(await reader.readLine()).to.equal('line3');
+				expect(await reader.readLine()).to.equal('');
 				expect(await reader.readLine()).to.be.null;
 			} finally {
 				reader.release();
@@ -33,13 +34,30 @@ describe('ReadNextLine', () => {
 		});
 
 		it('should handle Windows line ending: CR LF', async () => {
-			const input = 'line1\r\nline2\r\nline3\r\n';
+			const input = 'line1\r\nline2\r\nline3\r\n\r\n';
 			const stream = createStreamFromString(input);
 			const reader = new ReadNextLine(stream);
 			try {
 				expect(await reader.readLine()).to.equal('line1');
 				expect(await reader.readLine()).to.equal('line2');
 				expect(await reader.readLine()).to.equal('line3');
+				expect(await reader.readLine()).to.equal('');
+				expect(await reader.readLine()).to.be.null;
+			} finally {
+				reader.release();
+			}
+
+		});
+
+		it('should handle line ending: LF CR', async () => {
+			const input = 'line1\n\rline2\n\rline3\n\r\n\r';
+			const stream = createStreamFromString(input);
+			const reader = new ReadNextLine(stream);
+			try {
+				expect(await reader.readLine()).to.equal('line1');
+				expect(await reader.readLine()).to.equal('line2');
+				expect(await reader.readLine()).to.equal('line3');
+				expect(await reader.readLine()).to.equal('');
 				expect(await reader.readLine()).to.be.null;
 			} finally {
 				reader.release();
@@ -131,7 +149,6 @@ describe('ReadNextLine', () => {
 	});
 
 
-
 	it('should handle an empty stream', async () => {
 		const input = '';
 		const stream = createStreamFromString(input);
@@ -173,3 +190,21 @@ describe('ReadNextLine', () => {
 	});
 
 });
+
+it('split', async () => {
+	const input = 'line1\n\nline2\n\n\nline3\n';
+	const stream = createStreamFromString(input);
+	const reader = new ReadNextLine(stream);
+	try {
+		expect(await reader.readLine()).to.equal('line1');
+		expect(await reader.readLine()).to.equal('');
+		expect(await reader.readLine()).to.equal('line2');
+		expect(await reader.readLine()).to.equal('');
+		expect(await reader.readLine()).to.equal('');
+		expect(await reader.readLine()).to.equal('line3');
+		expect(await reader.readLine()).to.be.null;
+	} finally {
+		reader.release();
+	}
+});
+
