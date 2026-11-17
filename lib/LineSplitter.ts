@@ -1,51 +1,46 @@
 import { TransformStream, type TransformStreamDefaultController } from 'node:stream/web';
 
-// Define common BOM signatures
-const BOM_UTF_8 = new Uint8Array([0xef, 0xbb, 0xbf]);
-const BOM_UTF_16_LE = new Uint8Array([0xff, 0xfe]);
-const BOM_UTF_16_BE = new Uint8Array([0xfe, 0xff]);
-
-type TextEncodingType = 'utf-8' | 'utf-16le' | 'utf-16be';
-
-function extractEncoding(uint8Array: Uint8Array): TextEncodingType | undefined {
-	if (uint8Array.byteLength >= 2) {
-		if (uint8Array[0] === BOM_UTF_16_LE[0] && uint8Array[1] === BOM_UTF_16_LE[1]) {
-			return 'utf-16le';
-		}
-		if (uint8Array[0] === BOM_UTF_16_BE[0] && uint8Array[1] === BOM_UTF_16_BE[1]) {
-			return 'utf-16be';
-		}
+function selectEncoding(first: number, second: number): string {
+	if (first === 0xff && second === 0xfe) {
+		return 'utf-16le';
 	}
-	if (
-		uint8Array.byteLength >= 3 &&
-		uint8Array[0] === BOM_UTF_8[0] &&
-		uint8Array[1] === BOM_UTF_8[1] &&
-		uint8Array[2] === BOM_UTF_8[2]
-	) {
-		return 'utf-8';
+	if (first === 0xfe && second === 0xff) {
+		return 'utf-16be';
 	}
+	return 'utf-8';
 }
 
 export class LineSplitter extends TransformStream<Uint8Array, string> {
 	private buffer = '';
 	private readonly separator: RegExp = /\r\n|\n\r|\n|\r/;
 	private decoder?: TextDecoder;
+	private initialByte?: number;
 	private pendingSeparator?: '\r' | '\n';
 
 	constructor() {
 		super({
 			transform: (chunk, controller) => {
-				if (!this.decoder) {
-					const textEncoding = extractEncoding(chunk);
-					this.decoder = new TextDecoder(textEncoding);
+				if (!chunk.length) {
+					return;
 				}
-
-				// Keep the decoder state between chunks so fragmented characters are decoded correctly.
-				this.processText(this.decoder.decode(chunk, { stream: true }), controller, false);
+				let prefix = '';
+				if (!this.decoder) {
+					const first = this.initialByte ?? chunk[0];
+					if (this.initialByte === undefined && chunk.length === 1 && (first === 0xff || first === 0xfe)) {
+						this.initialByte = first;
+						return;
+					}
+					const second = this.initialByte === undefined ? chunk[1] : chunk[0];
+					this.decoder = new TextDecoder(selectEncoding(first, second));
+					if (this.initialByte !== undefined) {
+						prefix = this.decoder.decode(Uint8Array.of(first), { stream: true });
+						this.initialByte = undefined;
+					}
+				}
+				this.processText(prefix + this.decoder.decode(chunk, { stream: true }), controller, false);
 			},
 			flush: controller => {
-				// Flush any bytes retained by the decoder, then process the final line.
-				const finalText = this.decoder ? this.decoder.decode() : '';
+				const finalText = this.decoder ? this.decoder.decode() : this.initialByte === undefined ? '' : '\ufffd';
 				this.processText(finalText, controller, true);
 				this.buffer = '';
 			}
