@@ -1,4 +1,4 @@
-import { TransformStream } from 'node:stream/web';
+import { TransformStream, type TransformStreamDefaultController } from 'node:stream/web';
 
 // Define common BOM signatures
 const BOM_UTF_8 = new Uint8Array([0xef, 0xbb, 0xbf]);
@@ -30,49 +30,55 @@ export class LineSplitter extends TransformStream<Uint8Array, string> {
 	private buffer = '';
 	private readonly separator: RegExp = /\r\n|\n\r|\n|\r/;
 	private decoder?: TextDecoder;
-	private textEncoding?: string;
+	private pendingSeparator?: '\r' | '\n';
 
 	constructor() {
 		super({
 			transform: (chunk, controller) => {
 				if (!this.decoder) {
-					this.textEncoding = extractEncoding(chunk);
-					this.decoder = new TextDecoder(this.textEncoding);
+					const textEncoding = extractEncoding(chunk);
+					this.decoder = new TextDecoder(textEncoding);
 				}
 
-				// Append the new chunk to the buffer.
-				let textChunk = this.buffer + this.decoder.decode(chunk);
-
-				// Search separator
-				let position: number;
-				do {
-					position = textChunk.search(this.separator);
-					if (position !== -1) {
-						if (position + 1 >= textChunk.length) {
-							break;
-						}
-						const line = textChunk.substring(0, position);
-						controller.enqueue(line);
-						if (textChunk.startsWith('\r\n', position) || textChunk.startsWith('\n\r', position)) {
-							textChunk = textChunk.substring(position + 2);
-						} else {
-							textChunk = textChunk.substring(position + 1);
-						}
-					}
-				} while (position !== -1);
-				this.buffer = textChunk;
+				// Keep the decoder state between chunks so fragmented characters are decoded correctly.
+				this.processText(this.decoder.decode(chunk, { stream: true }), controller, false);
 			},
 			flush: controller => {
-				if (this.buffer.length > 0) {
-					const position = this.buffer.search(this.separator);
-					if (position === -1) {
-						controller.enqueue(this.buffer);
-					} else {
-						controller.enqueue(this.buffer.substring(0, position));
-					}
-				}
+				// Flush any bytes retained by the decoder, then process the final line.
+				const finalText = this.decoder ? this.decoder.decode() : '';
+				this.processText(finalText, controller, true);
 				this.buffer = '';
 			}
 		});
+	}
+
+	private processText(text: string, controller: TransformStreamDefaultController<string>, flush: boolean): void {
+		let textChunk = this.buffer + text;
+
+		// Consume the complementary half of a separator split across chunks, without emitting another line.
+		if (this.pendingSeparator !== undefined && (textChunk.length > 0 || flush)) {
+			const complement = this.pendingSeparator === '\r' ? '\n' : '\r';
+			if (textChunk.startsWith(complement)) {
+				textChunk = textChunk.substring(1);
+			}
+			this.pendingSeparator = undefined;
+		}
+
+		let position: number;
+		while ((position = textChunk.search(this.separator)) !== -1) {
+			const separatorLength = textChunk.startsWith('\r\n', position) || textChunk.startsWith('\n\r', position) ? 2 : 1;
+			controller.enqueue(textChunk.substring(0, position));
+			const separator = textChunk.charAt(position);
+			textChunk = textChunk.substring(position + separatorLength);
+			if (!flush && separatorLength === 1 && textChunk.length === 0) {
+				this.pendingSeparator = separator as '\r' | '\n';
+			}
+		}
+
+		if (flush && textChunk.length > 0) {
+			controller.enqueue(textChunk);
+			textChunk = '';
+		}
+		this.buffer = textChunk;
 	}
 }

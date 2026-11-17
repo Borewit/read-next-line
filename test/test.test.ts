@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { ReadableStream } from 'node:stream/web';
+import { ReadableStream, type ReadableStreamDefaultController } from 'node:stream/web';
 import { fileURLToPath } from 'node:url';
 import { LineSplitter, ReadNextLine } from '../lib/read-next-line.js';
 import { createNodeReadableStreamFromFile, createStreamFromString, createWebReadableStreamFromFile } from './util.ts';
@@ -57,6 +57,81 @@ describe('Partial lines across chunks', () => {
 		describe(implementation, () => {
 			for (const [name, chunks, expected] of cases) {
 				it(`should handle ${name} without duplicating buffered text`, async () => {
+					const reader = createReader(chunks);
+					try {
+						for (const line of expected) {
+							expect(await reader.readLine()).toEqual(line);
+						}
+						expect(await reader.readLine()).toBeNull();
+					} finally {
+						reader.release();
+					}
+				});
+			}
+		});
+	}
+});
+
+describe('Streaming decoder state across chunks', () => {
+	const createWebStream = (chunks: Uint8Array[]) =>
+		new ReadableStream<Uint8Array>({
+			start(controller) {
+				for (const chunk of chunks) {
+					controller.enqueue(chunk);
+				}
+				controller.close();
+			}
+		});
+	type LineReaderFactory = (chunks: Uint8Array[]) => { readLine(): Promise<string | null>; release(): void };
+	const implementations: [string, LineReaderFactory][] = [
+		['ReadNextLine with Web streams', (chunks: Uint8Array[]) => new ReadNextLine(createWebStream(chunks))],
+		['ReadNextLine with Node.js streams', (chunks: Uint8Array[]) => new ReadNextLine(Readable.from(chunks))],
+		[
+			'LineSplitter',
+			(chunks: Uint8Array[]) => {
+				const reader = createWebStream(chunks).pipeThrough(new LineSplitter()).getReader();
+				return {
+					async readLine() {
+						const { done, value } = await reader.read();
+						return done ? null : value;
+					},
+					release() {
+						reader.releaseLock();
+					}
+				};
+			}
+		]
+	];
+	const cases: [string, Uint8Array[], string[]][] = [
+		['a split UTF-8 two-byte sequence', [Uint8Array.from([0xc3]), Uint8Array.from([0xa9, 0x0a])], ['é']],
+		[
+			'a UTF-8 four-byte sequence split across several chunks',
+			[Uint8Array.from([0xf0, 0x9f]), Uint8Array.from([0x98]), Uint8Array.from([0x80, 0x0a])],
+			['😀']
+		],
+		['a split UTF-8 sequence at EOF', [Uint8Array.from([0xc3]), Uint8Array.from([0xa9])], ['é']],
+		[
+			'a UTF-16LE code unit split across chunks',
+			[Uint8Array.from([0xff, 0xfe, 0x41]), Uint8Array.from([0x00, 0x0a, 0x00])],
+			['A']
+		],
+		[
+			'a UTF-16LE surrogate pair split across chunks',
+			[Uint8Array.from([0xff, 0xfe, 0x3d]), Uint8Array.from([0xd8, 0x00]), Uint8Array.from([0xde, 0x0a, 0x00])],
+			['😀']
+		],
+		[
+			'a UTF-16BE surrogate pair split across chunks',
+			[Uint8Array.from([0xfe, 0xff, 0xd8]), Uint8Array.from([0x3d, 0xde, 0x00]), Uint8Array.from([0x00, 0x0a])],
+			['😀']
+		],
+		['an incomplete UTF-8 sequence flushed at EOF', [Uint8Array.from([0x41, 0x0a, 0xc3])], ['A', '\ufffd']]
+	];
+
+	for (const [implementation, createReader] of implementations) {
+		describe(implementation, () => {
+			for (const [name, chunks, expected] of cases) {
+				it(`should handle ${name}`, async () => {
 					const reader = createReader(chunks);
 					try {
 						for (const line of expected) {
@@ -132,6 +207,25 @@ describe('ReadNextLine', () => {
 				reader.release();
 			}
 		});
+
+		it('should emit a completed line before the source closes', async () => {
+			let streamController!: ReadableStreamDefaultController<Uint8Array>;
+			const stream = new ReadableStream<Uint8Array>({
+				start(controller) {
+					streamController = controller;
+					controller.enqueue(new TextEncoder().encode('ready\n'));
+				}
+			});
+			const reader = new ReadNextLine(stream);
+			try {
+				expect(await reader.readLine()).toEqual('ready');
+				streamController.enqueue(new TextEncoder().encode('next\n'));
+				expect(await reader.readLine()).toEqual('next');
+			} finally {
+				streamController.close();
+				reader.release();
+			}
+		}, 1000);
 	});
 
 	async function countLines(stream: ReadableStream<Uint8Array> | Readable, nrOfLinex: number, startsWith: string) {
