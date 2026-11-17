@@ -46,7 +46,7 @@ Designed to work with Works seamlessly with either:
 - [Node.js Web Streams API](https://nodejs.org/api/webstreams.html#web-streams-api)
 - [Streams-API](https://developer.mozilla.org/docs/Web/API/Streams_API) in the browser
 
-Compatible with modern web browsers or Node.js ≥ 18.
+Compatible with modern web browsers or Node.js ≥ 18.7.0.
 
 ## Usage
 
@@ -127,6 +127,26 @@ new StreamLineReader(stream: ReadableStream<Uint8Array>);
 - **`release(): void`**
     - Release the internal [Reader](https://developer.mozilla.org/docs/Web/API/ReadableStreamDefaultReader/releaseLock).
 
+
+## Contributing
+
+Development and the test toolchain require Node.js 22.12 or later. The published package supports Node.js 18.7.0 or later.
+
+On Node.js 25 and later, Corepack is no longer bundled. First install it using the [supported npm installation method](https://github.com/nodejs/corepack#manual-installs):
+
+```bash
+npm install -g corepack
+```
+
+Then enable Corepack and use the pinned Yarn version:
+
+```bash
+corepack enable
+yarn install
+yarn typecheck
+yarn lint
+yarn test
+```
 
 ## License
 
