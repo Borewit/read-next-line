@@ -56,7 +56,7 @@ export class LineSplitter extends TransformStream<Uint8Array, string> {
 						}
 					}
 				} while(position !== -1)
-				this.buffer += textChunk;
+				this.buffer = textChunk;
             },
             flush: (controller) => {
 				if (this.buffer.length > 0) {

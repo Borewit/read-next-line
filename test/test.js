@@ -2,7 +2,9 @@ import * as chai from 'chai';
 import chaiString from 'chai-string';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {ReadNextLine} from '../lib/read-next-line.js';
+import {Readable} from 'node:stream';
+import {ReadableStream} from 'node:stream/web';
+import {LineSplitter, ReadNextLine} from '../lib/read-next-line.js';
 import {createWebReadableStreamFromFile, createStreamFromString, createNodeReadableStreamFromFile} from "./util.js";
 
 chai.use(chaiString);
@@ -12,6 +14,64 @@ const {expect} = chai;
 // Convert `import.meta.url` to a file path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+describe('Partial lines across chunks', () => {
+	const encodeChunks = (chunks) => {
+		const encoder = new TextEncoder();
+		return chunks.map(chunk => encoder.encode(chunk));
+	};
+	const createWebStream = (chunks) => new ReadableStream({
+		start(controller) {
+			for (const chunk of encodeChunks(chunks)) {
+				controller.enqueue(chunk);
+			}
+			controller.close();
+		},
+	});
+	const implementations = [
+		['ReadNextLine with Web streams', chunks => new ReadNextLine(createWebStream(chunks))],
+		['ReadNextLine with Node.js streams', chunks => new ReadNextLine(Readable.from(encodeChunks(chunks)))],
+		['LineSplitter', chunks => {
+			const reader = createWebStream(chunks).pipeThrough(new LineSplitter()).getReader();
+			return {
+				async readLine() {
+					const {done, value} = await reader.read();
+					return done ? null : value;
+				},
+				release() {
+					reader.releaseLock();
+				},
+			};
+		}],
+	];
+	const cases = [
+		['a line split across two chunks', ['hel', 'lo\n'], ['hello']],
+		['a line split across several chunks', ['h', 'e', 'l', 'l', 'o\n'], ['hello']],
+		['an unterminated final line', ['hel', 'lo'], ['hello']],
+		['consumed lines followed by partial lines', ['first\nsec', 'ond\nthi', 'rd\n'], ['first', 'second', 'third']],
+		['empty chunks between line fragments', ['hel', '', 'lo\n'], ['hello']],
+		['CRLF split across chunks', ['a\r', '\nb\n'], ['a', 'b']],
+		['LFCR split across chunks', ['a\n', '\rb\n'], ['a', 'b']],
+	];
+
+	for (const [implementation, createReader] of implementations) {
+		describe(implementation, () => {
+			for (const [name, chunks, expected] of cases) {
+				it(`should handle ${name} without duplicating buffered text`, async () => {
+					const reader = createReader(chunks);
+					try {
+						for (const line of expected) {
+							expect(await reader.readLine()).to.equal(line);
+						}
+						expect(await reader.readLine()).to.be.null;
+					} finally {
+						reader.release();
+					}
+				});
+			}
+		});
+	}
+});
 
 describe('ReadNextLine', () => {
 	// Helper function to create a ReadableStream from a string
@@ -207,4 +267,3 @@ it('split', async () => {
 		reader.release();
 	}
 });
-
