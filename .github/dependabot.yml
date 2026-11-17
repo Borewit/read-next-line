@@ -16,3 +16,12 @@ updates:
         dependency-type: "development"
         patterns:
           - "@types/*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "06:00"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies

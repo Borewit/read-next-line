@@ -7,16 +7,17 @@
       steps:
         - name: Fetch Dependabot metadata
           id: dependabot-metadata
-          uses: dependabot/fetch-metadata@v1
+          uses: dependabot/fetch-metadata@v3.1.0
           with:
             github-token: "${{ secrets.GITHUB_TOKEN }}"
         - name: Add dev-dependencies label
-          uses: actions-ecosystem/action-add-labels@v1
+          uses: actions-ecosystem/action-add-labels@v1.1.0
           if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
           with:
+            github-token: "${{ secrets.GITHUB_TOKEN }}"
             labels: dev-dependencies
         - name: Remove dependencies label
-          uses: actions-ecosystem/action-remove-labels@v1
+          uses: actions-ecosystem/action-remove-labels@v1.3.0
           if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
           with:
             labels: dependencies
