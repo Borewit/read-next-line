@@ -1,0 +1,97 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 120,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always",
+			"trailingCommas": "none",
+			"arrowParentheses": "asNeeded",
+			"bracketSpacing": true
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"correctness": {
+				"noConstantCondition": "warn",
+				"noUnusedPrivateClassMembers": "warn",
+				"noUnusedVariables": "error",
+				"noUnusedImports": "error"
+			},
+			"style": {
+				"useBlockStatements": "error",
+				"useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } },
+				"useImportType": "error",
+				"useExportType": "error",
+				"useNodejsImportProtocol": "error",
+				"noParameterAssign": "off",
+				"useConst": "error",
+				"useConsistentBuiltinInstantiation": "error",
+				"useThrowNewError": "error",
+				"useThrowOnlyError": "error",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"noUnusedTemplateLiteral": "error",
+				"useNumberNamespace": "error",
+				"noInferrableTypes": "error",
+				"noUselessElse": "error",
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"node:buffer": "Use Uint8Array instead of Buffer"
+						}
+					}
+				}
+			},
+			"preset": "recommended",
+			"complexity": {
+				"useSimpleNumberKeys": "off",
+				"noForEach": "off"
+			},
+			"suspicious": {
+				"noEmptyBlockStatements": "error",
+				"noControlCharactersInRegex": "off",
+				"useErrorMessage": "error",
+				"noAssignInExpressions": "off"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["test/**/*.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		}
+	],
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["biome.jsonc", "lib/**/*.ts", "test/**/*.ts", "test/**/*.mjs", "!**/*.d.ts"]
+	}
+}

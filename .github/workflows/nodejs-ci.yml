@@ -15,7 +15,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        # Vitest 5 requires Node.js >= 22.12; older runtime support is checked separately.
+        node-version: [22.x, 24.x, 26.x]
 
     steps:
 
@@ -33,8 +34,44 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Install dependencies
-        run: yarn build
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
 
       - name: Test with Node.js ${{ matrix.node-version }}
-        run: yarn run test
+        run: yarn test
+
+  runtime:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ['18.7.0', 18.x, 20.x]
+
+    steps:
+      - name: 'Checkout the repository'
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Node.js for build tooling
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.x
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Compile runtime modules
+        run: yarn compile
+
+      - name: Set up runtime Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Test runtime compatibility
+        run: node --test test/runtime.test.mjs
