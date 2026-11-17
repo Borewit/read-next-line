@@ -73,6 +73,20 @@ describe('Partial lines across chunks', () => {
 });
 
 describe('Streaming decoder state across chunks', () => {
+	it('retains the first BOM byte when the producer reuses its buffer', async () => {
+		const splitter = new LineSplitter();
+		const writer = splitter.writable.getWriter();
+		const reader = splitter.readable.getReader();
+		const line = reader.read();
+		const byte = Uint8Array.of(0xff);
+		await writer.write(byte);
+		byte[0] = 0xfe;
+		await writer.write(byte);
+		await writer.write(Uint8Array.of(0x41, 0x00, 0x0a, 0x00));
+		await writer.close();
+		expect(await line).toEqual({ done: false, value: 'A' });
+	});
+
 	const createWebStream = (chunks: Uint8Array[]) =>
 		new ReadableStream<Uint8Array>({
 			start(controller) {
@@ -110,6 +124,30 @@ describe('Streaming decoder state across chunks', () => {
 			['😀']
 		],
 		['a split UTF-8 sequence at EOF', [Uint8Array.from([0xc3]), Uint8Array.from([0xa9])], ['é']],
+		[
+			'a UTF-8 BOM split across chunks',
+			[Uint8Array.from([0xef]), Uint8Array.from([0xbb]), Uint8Array.from([0xbf, 0x41, 0x0a])],
+			['A']
+		],
+		[
+			'a UTF-16LE BOM split across chunks',
+			[Uint8Array.from([0xff]), Uint8Array.from([0xfe, 0x41, 0x00, 0x0a, 0x00])],
+			['A']
+		],
+		[
+			'a UTF-16BE BOM split across chunks',
+			[Uint8Array.from([0xfe]), Uint8Array.from([0xff, 0x00, 0x41, 0x00, 0x0a])],
+			['A']
+		],
+		[
+			'a split BOM after empty initial chunks',
+			[new Uint8Array(0), Uint8Array.from([0xff]), new Uint8Array(0), Uint8Array.from([0xfe, 0x41, 0x00, 0x0a, 0x00])],
+			['A']
+		],
+		['a short stream with a partial UTF-16 BOM', [Uint8Array.from([0xff])], ['\ufffd']],
+		['a second U+FEFF after a split BOM', [Uint8Array.of(0xff), Uint8Array.of(0xfe, 0xff, 0xfe)], ['\ufeff']],
+		['a false UTF-16 BOM prefix', [Uint8Array.of(0xff), Uint8Array.of(0x41)], ['\ufffdA']],
+		['only empty chunks', [new Uint8Array(0), new Uint8Array(0)], []],
 		[
 			'a UTF-16LE code unit split across chunks',
 			[Uint8Array.from([0xff, 0xfe, 0x41]), Uint8Array.from([0x00, 0x0a, 0x00])],
