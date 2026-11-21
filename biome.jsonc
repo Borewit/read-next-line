@@ -92,6 +92,14 @@
 	],
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["biome.jsonc", "lib/**/*.ts", "test/**/*.ts", "test/**/*.mjs", "!**/*.d.ts"]
+		"includes": [
+			"biome.jsonc",
+			"lib/**/*.ts",
+			"lib/**/*.cts",
+			"test/**/*.ts",
+			"test/**/*.mjs",
+			"!**/*.d.ts",
+			"!**/*.d.cts"
+		]
 	}
 }
