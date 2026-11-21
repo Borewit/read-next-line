@@ -124,6 +124,8 @@ new StreamLineReader(stream: ReadableStream<Uint8Array>);
 
 - **`readLine(): Promise<string | null>`**
 	- Reads the next line from the stream. Returns `null` if the stream ends.
+- **`cancel(reason?: unknown): Promise<void>`**
+    - Stop reading early. Pending reads finish with `null`. Cancellation reaches the upstream Web stream or destroys an active Node.js source. Call this before releasing the reader.
 - **`release(): void`**
     - Release the internal [Reader](https://developer.mozilla.org/docs/Web/API/ReadableStreamDefaultReader/releaseLock).
 
