@@ -9,7 +9,7 @@ import { createNodeReadableStreamFromFile, createStreamFromString, createWebRead
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-describe('Partial lines across chunks', () => {
+describe('Line boundaries across chunks', () => {
 	const encodeChunks = (chunks: string[]): Uint8Array[] => {
 		const encoder = new TextEncoder();
 		return chunks.map(chunk => encoder.encode(chunk));
@@ -49,6 +49,14 @@ describe('Partial lines across chunks', () => {
 		['an unterminated final line', ['hel', 'lo'], ['hello']],
 		['consumed lines followed by partial lines', ['first\nsec', 'ond\nthi', 'rd\n'], ['first', 'second', 'third']],
 		['empty chunks between line fragments', ['hel', '', 'lo\n'], ['hello']],
+		['standalone CR between chunks', ['a', '\r', 'b'], ['a', 'b']],
+		['standalone LF between chunks', ['a', '\n', 'b'], ['a', 'b']],
+		['consecutive CRs across chunks', ['a\r', '\rb'], ['a', '', 'b']],
+		['consecutive LFs across chunks', ['a\n', '\nb'], ['a', '', 'b']],
+		['a final CR', ['a', '\r'], ['a']],
+		['a final LF', ['a', '\n'], ['a']],
+		['a final split CRLF', ['a\r', '', '\n'], ['a']],
+		['a final split LFCR', ['a\n', '', '\r'], ['a']],
 		['CRLF split across chunks', ['a\r', '\nb\n'], ['a', 'b']],
 		['LFCR split across chunks', ['a\n', '\rb\n'], ['a', 'b']]
 	];
@@ -56,7 +64,7 @@ describe('Partial lines across chunks', () => {
 	for (const [implementation, createReader] of implementations) {
 		describe(implementation, () => {
 			for (const [name, chunks, expected] of cases) {
-				it(`should handle ${name} without duplicating buffered text`, async () => {
+				it(`should handle ${name}`, async () => {
 					const reader = createReader(chunks);
 					try {
 						for (const line of expected) {
