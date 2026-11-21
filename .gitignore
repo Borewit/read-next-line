@@ -3,3 +3,4 @@ node_modules
 lib/**/*.js
 lib/**/*.d.ts
 .idea
+*.iml
