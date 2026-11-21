@@ -182,6 +182,26 @@ test('cancel destroys a Node.js source with a read pending', async () => {
 	reader.release();
 });
 
+test('cancel destroys a Node.js source that reported an error without closing', async () => {
+	const failure = new TypeError('source failed');
+	const source = new Readable({
+		read() {
+			/* Keep the source open. */
+		}
+	});
+	const reader = new ReadNextLine(source);
+	try {
+		source.emit('error', failure);
+		await assert.rejects(reader.readLine(), error => error === failure);
+		assert.equal(source.destroyed, false);
+		await assert.rejects(reader.cancel(), error => error === failure);
+		assert.equal(source.destroyed, true);
+	} finally {
+		reader.release();
+		source.destroy();
+	}
+});
+
 test('release leaves the source running', async () => {
 	const source = new Readable({
 		read() {
@@ -193,4 +213,51 @@ test('release leaves the source running', async () => {
 	await assert.rejects(reader.cancel(), TypeError);
 	assert.equal(source.destroyed, false);
 	source.destroy();
+});
+
+test('CommonJS exposes the shared reader and splitter synchronously', async () => {
+	const api = createRequire(import.meta.url)('read-next-line');
+	assert.equal(api.LineSplitter, LineSplitter);
+	assert.equal(api.ReadNextLine, ReadNextLine);
+	const reader = new api.ReadNextLine(createWebStream(['one\ntwo\n']));
+	assert.deepEqual(await Promise.all([reader.readLine(), reader.readLine()]), ['one', 'two']);
+	await reader.cancel();
+	reader.release();
+});
+
+test('CommonJS release works before the first read', async () => {
+	const { ReadNextLine } = createRequire(import.meta.url)('read-next-line');
+	const reader = new ReadNextLine(createWebStream(['one']));
+	reader.release();
+	await assert.rejects(reader.readLine(), TypeError);
+});
+
+test('construction rejects a locked Web stream and succeeds after unlock', async () => {
+	const source = createWebStream(['line']);
+	const owner = source.getReader();
+	try {
+		assert.throws(() => new ReadNextLine(source), TypeError);
+	} finally {
+		owner.releaseLock();
+	}
+	const reader = new ReadNextLine(source);
+	assert.deepEqual(await readLines(reader), ['line']);
+	reader.release();
+});
+
+test('source error forwarding survives readable EOF until the Node.js source closes', async () => {
+	const source = Readable.from([], { autoDestroy: false });
+	const reader = new ReadNextLine(source);
+	try {
+		assert.equal(await reader.readLine(), null);
+		await new Promise(resolve => setImmediate(resolve));
+		assert.equal(source.destroyed, false);
+		source.emit('error', new Error('late source failure'));
+	} finally {
+		reader.release();
+		const closed = new Promise(resolve => source.once('close', resolve));
+		source.destroy();
+		await closed;
+	}
+	assert.equal(source.listenerCount('error'), 0);
 });
