@@ -128,6 +128,27 @@ new StreamLineReader(stream: ReadableStream<Uint8Array>);
     - Release the internal [Reader](https://developer.mozilla.org/docs/Web/API/ReadableStreamDefaultReader/releaseLock).
 
 
+## Sponsoring
+
+Support the maintenance and development of my work`:
+
+- [Sponsor Borewit on GitHub](https://github.com/sponsors/Borewit)
+
+- Buy me a coffee:
+
+  <a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
+
+### Sponsors
+
+Code reviews powered by: <a href="https://coderabbit.link/borewit">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="image/coderabbit-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="image/coderabbit-light.svg" />
+  <img src="image/coderabbit-light.svg" alt="CodeRabbit" width="360" />
+</picture>
+</a>
+<br />
+
 ## Contributing
 
 Development and the test toolchain require Node.js 22.12 or later. The published package supports Node.js 18.7.0 or later.
