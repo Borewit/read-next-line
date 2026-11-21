@@ -145,3 +145,52 @@ test('source errors immediately after construction reject with the original erro
 		reader.release();
 	}
 });
+
+test('cancel forwards the reason and waits for upstream Web cancellation', async () => {
+	const reason = new Error('finished reading');
+	let cancelled = false;
+	const reader = new ReadNextLine(
+		new ReadableStream({
+			async cancel(value) {
+				assert.equal(value, reason);
+				await new Promise(resolve => setImmediate(resolve));
+				cancelled = true;
+			}
+		})
+	);
+	const pending = reader.readLine();
+	await reader.cancel(reason);
+	assert.ok(cancelled);
+	assert.equal(await pending, null);
+	assert.equal(await reader.readLine(), null);
+	await reader.cancel();
+	reader.release();
+});
+
+test('cancel destroys a Node.js source with a read pending', async () => {
+	const source = new Readable({
+		read() {
+			/* Keep the source open. */
+		}
+	});
+	const reader = new ReadNextLine(source);
+	const pending = reader.readLine();
+	await new Promise(resolve => setImmediate(resolve));
+	await reader.cancel();
+	assert.equal(await pending, null);
+	assert.ok(source.destroyed);
+	reader.release();
+});
+
+test('release leaves the source running', async () => {
+	const source = new Readable({
+		read() {
+			/* Keep the source open. */
+		}
+	});
+	const reader = new ReadNextLine(source);
+	reader.release();
+	await assert.rejects(reader.cancel(), TypeError);
+	assert.equal(source.destroyed, false);
+	source.destroy();
+});
